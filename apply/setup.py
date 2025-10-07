@@ -5,13 +5,13 @@ with open("readme.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="notbadai_apply",
-    version="0.1.0",
+    version="0.1.1",
     author="NotBadAI Team",
     author_email="contact@notbad.ai",
     description="An intelligent programming assistant powered by AI",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/notbadai/extensions/apply",
+    url="https://github.com/notbadai/extensions",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

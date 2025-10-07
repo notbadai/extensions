@@ -11,7 +11,7 @@ setup(
     description="An intelligent programming assistant powered by AI",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/notbadai/extensions/autocomplete",
+    url="https://github.com/notbadai/extensions",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
