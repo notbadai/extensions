@@ -19,6 +19,36 @@ echo ""
 
 cd "$PACKAGE_DIR"
 
+# Check if common is a symlink and handle it
+COMMON_DIR="notbadai_${PACKAGE_DIR}/common"
+SYMLINK_TARGET=""
+
+if [ -L "$COMMON_DIR" ]; then
+    echo "Detected symlink for common directory. Creating temporary copy..."
+
+    # Save the symlink target before removing it
+    SYMLINK_TARGET=$(readlink "$COMMON_DIR")
+    echo "Symlink points to: $SYMLINK_TARGET"
+
+    # Remove the symlink and copy the actual content
+    rm "$COMMON_DIR"
+    cp -r "$SYMLINK_TARGET" "$COMMON_DIR"
+    echo "✓ Temporary copy created"
+fi
+
+# Cleanup function to restore symlink
+cleanup() {
+    if [ -n "$SYMLINK_TARGET" ]; then
+        echo "Restoring common symlink..."
+        rm -rf "$COMMON_DIR"
+        ln -s "$SYMLINK_TARGET" "$COMMON_DIR"
+        echo "✓ Symlink restored to $SYMLINK_TARGET"
+    fi
+}
+
+# Set trap to ensure cleanup happens even if script fails
+trap cleanup EXIT
+
 echo "Cleaning previous builds..."
 rm -rf dist/ build/ *.egg-info
 
