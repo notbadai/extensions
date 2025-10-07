@@ -5,7 +5,7 @@ with open("readme.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="notbadai_chat",
-    version="0.1.1",
+    version="0.1.3",
     author="NotBadAI Team",
     author_email="contact@notbad.ai",
     description="An intelligent programming assistant powered by AI",
@@ -28,4 +28,6 @@ setup(
         "requests",
         "openai",
     ],
+    include_package_data=True,
+    package_data={"notbadai_chat": ["*.md", "**/*.md"]},
 )

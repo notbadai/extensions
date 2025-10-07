@@ -28,4 +28,6 @@ setup(
         "requests",
         "openai",
     ],
+include_package_data=True,
+    package_data={"notbadai_files_chat": ["*.md", "**/*.md"]},
 )
