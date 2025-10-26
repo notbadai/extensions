@@ -7,34 +7,33 @@ from .common.llm import call_llm
 from .common.formatting import markdown_section, markdown_code_block
 
 
-def get_prompt_template(template_path: str, **kwargs) -> str:
-    with open(Path(__file__).parent / f'{template_path}.md') as f:
-        return Template(f.read()).substitute(kwargs)
-
-
 def start():
     """Main extension function that handles chat interactions with the AI assistant."""
-    current_file = api.get_current_file()
-    selection = api.get_selection()
-    terminal = api.get_current_terminal().get_snapshot()
     model = 'qwen'
-
     context = []
 
     open_files = [f for f in api.get_repo_files() if f.is_open]
     if open_files:
         context.append(markdown_section("Relevant files", "\n\n".join(
             f'Path: `{f.path}`\n\n{markdown_code_block(f.get_content())}' for f in open_files)))
-    if current_file:
+
+    if current_file := api.get_current_file():
         context.append(markdown_section("Current File",
                                         f"Path: `{current_file.path}`\n\n{markdown_code_block(current_file.get_content())}"))
-    if terminal:
+
+    if terminal := api.get_current_terminal().get_snapshot():
         context.append(markdown_section("Terminal output", markdown_code_block(terminal[-40000:])))
-    if selection and selection.strip():
-        context.append(markdown_section("Selection",
-                                        f"This is the code snippet that I'm referring to\n\n{markdown_code_block(selection)}"))
+
+    if selection := api.get_selection():
+        if selection.strip():
+            context.append(markdown_section("Selection",
+                                            f"This is the code snippet that I'm referring to\n\n{markdown_code_block(selection)}"))
+
+    with open(Path(__file__).parent / 'chat.system.md') as f:
+        system_prompt = Template(f.read()).substitute(model=model)
+
     messages = [
-        {'role': 'system', 'content': get_prompt_template('chat.system', model=model)},
+        {'role': 'system', 'content': system_prompt},
         {'role': 'user', 'content': "\n\n".join(context)},
         {'role': 'user', 'content': api.get_prompt()},
     ]
