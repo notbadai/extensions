@@ -18,16 +18,15 @@ def start():
             f'Path: `{f.path}`\n\n{markdown_code_block(f.get_content())}' for f in open_files)))
 
     if current_file := api.get_current_file():
-        context.append(markdown_section("Current File",
-                                        f"Path: `{current_file.path}`\n\n{markdown_code_block(current_file.get_content())}"))
+        file_content = markdown_code_block(current_file.get_content())
+        context.append(markdown_section("Current File", f"Path: `{current_file.path}`\n\n{file_content}"))
 
     if terminal := api.get_current_terminal().get_snapshot():
         context.append(markdown_section("Terminal output", markdown_code_block(terminal[-40000:])))
 
-    if selection := api.get_selection():
-        if selection.strip():
-            context.append(markdown_section("Selection",
-                                            f"This is the code snippet that I'm referring to\n\n{markdown_code_block(selection)}"))
+    if selection := api.get_selection().strip():
+        selection_content = markdown_code_block(selection)
+        context.append(markdown_section("Selection", f"This is the code snippet that I'm referring to\n\n{selection_content}"))
 
     with open(Path(__file__).parent / 'chat.system.md') as f:
         system_prompt = Template(f.read()).substitute(model=model)
