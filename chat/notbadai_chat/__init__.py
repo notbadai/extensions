@@ -26,7 +26,8 @@ def start():
 
     if selection := api.get_selection().strip():
         selection_content = markdown_code_block(selection)
-        context.append(markdown_section("Selection", f"This is the code snippet that I'm referring to\n\n{selection_content}"))
+        section_content = f"This is the code snippet that I'm referring to\n\n{selection_content}"
+        context.append(markdown_section("Selection", section_content))
 
     with open(Path(__file__).parent / 'chat.system.md') as f:
         system_prompt = Template(f.read()).substitute(model=model)
@@ -36,5 +37,4 @@ def start():
         {'role': 'user', 'content': "\n\n".join(context)},
         {'role': 'user', 'content': api.get_prompt()},
     ]
-
     call_llm(model, messages)
