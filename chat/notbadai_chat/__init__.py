@@ -30,11 +30,9 @@ def start():
                                         f"Path: `{current_file.path}`\n\n{markdown_code_block(current_file.get_content())}"))
     if terminal:
         context.append(markdown_section("Terminal output", markdown_code_block(terminal[-40000:])))
-
     if selection and selection.strip():
         context.append(markdown_section("Selection",
                                         f"This is the code snippet that I'm referring to\n\n{markdown_code_block(selection)}"))
-
     messages = [
         {'role': 'system', 'content': get_prompt_template('chat.system', model=model)},
         {'role': 'user', 'content': "\n\n".join(context)},
