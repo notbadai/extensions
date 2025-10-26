@@ -1,70 +1,42 @@
 from string import Template
 from pathlib import Path
 
-from notbadai_ide import api, START_METADATA, END_METADATA
+from notbadai_ide import api
 
 from .common.llm import call_llm
-from .common.utils import parse_prompt
-from .common.prompt import build_context
-
-module_dir = Path(__file__).parent
+from .common.formatting import markdown_section, markdown_code_block
 
 
 def get_prompt_template(template_path: str, **kwargs) -> str:
-    path = module_dir / f'{template_path}.md'
-    with open(str(path)) as f:
-        template = Template(f.read())
-
-    return template.substitute(kwargs)
+    with open(Path(__file__).parent / f'{template_path}.md') as f:
+        return Template(f.read()).substitute(kwargs)
 
 
 def start():
     """Main extension function that handles chat interactions with the AI assistant."""
-    command, model, prompt = parse_prompt()
+    current_file = api.get_current_file()
     selection = api.get_selection()
-    chat_history = api.get_chat_history()
-    prompt = api.get_prompt()
+    terminal = api.get_current_terminal().get_snapshot()
+    model = 'qwen'
 
-    api.chat(f'{START_METADATA}model: {model}, command: {command}{END_METADATA}')
+    context = []
 
-    if command == '':
-        api.chat(f'{START_METADATA}Without context{END_METADATA}')
-        messages = [
-            {'role': 'system', 'content': get_prompt_template('chat.system', model=model)},
-            *[m.to_dict() for m in chat_history],
-            {'role': 'user', 'content': prompt},
-        ]
-    elif command == 'here':
-        context = build_context()
+    open_files = [f for f in api.get_repo_files() if f.is_open]
+    if open_files:
+        context.append(markdown_section("Relevant files", "\n\n".join(
+            f'Path: `{f.path}`\n\n{markdown_code_block(f.get_content())}' for f in open_files)))
+    if current_file:
+        context.append(markdown_section("Current File",
+                                        f"Path: `{current_file.path}`\n\n{markdown_code_block(current_file.get_content())}"))
+    if terminal:
+        context.append(markdown_section("Terminal output", markdown_code_block(terminal[-40000:])))
+    if selection and selection.strip():
+        context.append(markdown_section("Selection",
+                                        f"This is the code snippet that I'm referring to\n\n{markdown_code_block(selection)}"))
+    messages = [
+        {'role': 'system', 'content': get_prompt_template('chat.system', model=model)},
+        {'role': 'user', 'content': "\n\n".join(context)},
+        {'role': 'user', 'content': api.get_prompt()},
+    ]
 
-        api.chat(f'{START_METADATA}With context: {len(context) :,} characters,'
-                               f' selection: {bool(selection)}{END_METADATA}')
-        api.log(context)
-        messages = [
-            {'role': 'system', 'content': get_prompt_template('chat.system', model=model)},
-            {'role': 'user', 'content': context},
-            *[m.to_dict() for m in chat_history],
-            {'role': 'user', 'content': prompt},
-        ]
-    elif command == 'context':
-        context = build_context()
-
-        api.chat(f'{START_METADATA}With context: {len(context) :,} characters,'
-                               f' selection: {bool(selection)}{END_METADATA}')
-        # api.log(context)
-        messages = [
-            {'role': 'system', 'content': get_prompt_template('chat.system', model=model)},
-            {'role': 'user', 'content': context},
-            *[m.to_dict() for m in chat_history],
-            {'role': 'user', 'content': prompt},
-        ]
-    else:
-        raise ValueError(f'Unknown command: {command}')
-
-    api.log(f'messages {len(messages)}')
-    api.log(f'prompt {prompt}')
-    # api.log(context)
-
-    content = call_llm(model, messages)
-
-    api.log(content)
+    call_llm(model, messages)
