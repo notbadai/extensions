@@ -1,11 +1,8 @@
 from string import Template
 from pathlib import Path
-
 from notbadai_ide import api
-
 from .common.llm import call_llm
 from .common.formatting import markdown_section, markdown_code_block
-
 
 def start():
     """Main extension function that handles chat interactions with the AI assistant."""
