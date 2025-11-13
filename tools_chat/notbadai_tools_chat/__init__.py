@@ -12,7 +12,9 @@ from .utils.llm import call_llm
 def start():
     """Main extension function that handles chat interactions with the AI assistant."""
 
-    command, model, prompt = parse_prompt()
+    model = 'qwen'
+
+    command, _, prompt = parse_prompt()
     selection = api.get_selection()
     chat_history = api.get_chat_history()
 
