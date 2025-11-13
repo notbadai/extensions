@@ -5,7 +5,7 @@ from typing import List, Dict
 
 from notbadai_ide import api
 
-module_dir = Path(__file__).parent
+module_dir = Path(__file__).parent.parent
 
 
 def get_prompt_template(template_path: str, **kwargs) -> str:
@@ -20,7 +20,6 @@ def search_repo_files(query: str, file_extensions: List[str] = None) -> List[Dic
     """Search for a query string across all repository files.
 
     Args:
-        api: ExtensionAPI instance to access repo files
         query: The string to search for
         file_extensions: Optional list of file extensions to limit search (e.g., ['.py', '.js'])
 
@@ -29,7 +28,7 @@ def search_repo_files(query: str, file_extensions: List[str] = None) -> List[Dic
     """
     results = []
 
-    for file in api.repo_files:
+    for file in api.get_repo_files():
         # Filter by file extensions if specified
         if file_extensions:
             if not any(file.path.endswith(ext) for ext in file_extensions):
@@ -60,7 +59,6 @@ def read_file(file_path: str) -> str:
     """Read the content of a file from the repository.
 
     Args:
-        api: ExtensionAPI instance to access repo files
         file_path: Path to the file to read
 
     Returns:
@@ -68,7 +66,7 @@ def read_file(file_path: str) -> str:
     """
     try:
         # Find the file in repo_files
-        for file in api.repo_files:
+        for file in api.get_repo_files():
             if file.path == file_path:
                 return file.get_content()
         # If not found in repo_files, try to read directly

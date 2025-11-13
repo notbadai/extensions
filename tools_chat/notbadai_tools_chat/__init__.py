@@ -13,27 +13,25 @@ def start():
     """Main extension function that handles chat interactions with the AI assistant."""
 
     command, model, prompt = parse_prompt()
+    selection = api.get_selection()
+    chat_history = api.get_chat_history()
 
     api.chat(f'{START_METADATA}model: {model}, command: {command}{END_METADATA}')
 
     if command == 'context':
-        api.log('Normal context')
         context = build_context()
 
-        api.push_meta(f'With context: {len(context) :,},'
-                      f' selection: {bool(api.selection)}')
-        # api.log(context)
+        api.chat(f'{START_METADATA}With context: {len(context) :,},'
+                 f' selection: {bool(selection)}{END_METADATA}')
+
         messages = [
             {'role': 'system', 'content': get_prompt_template('tools.system', model=model)},
             {'role': 'user', 'content': context},
-            *[m.to_dict() for m in api.chat_history],
+            *[m.to_dict() for m in chat_history],
             {'role': 'user', 'content': prompt},
         ]
     else:
         raise ValueError(f'Unknown command: {command}')
-
-    api.log(f'messages {len(messages)}')
-    api.log(f'prompt {api.prompt}')
 
     while True:
         res = call_llm(model, messages)
@@ -56,7 +54,7 @@ def start():
                     # Get the function and execute it
                     function = get_function_by_name(function_name)
                     if function:
-                        result = function(api, **function_args)
+                        result = function(**function_args)
                         tool_results.append({
                             "role": "tool",
                             "name": function_name,
