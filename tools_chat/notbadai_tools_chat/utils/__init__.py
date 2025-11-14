@@ -49,7 +49,7 @@ def search_repo_files(query: str, file_extensions: List[str] = None) -> List[Dic
             # Skip files that can't be read
             continue
 
-    api.push(START_METADATA + '<strong>Search Results</strong><br/>' + json.dumps(results, indent=4) + END_METADATA)
+    api.chat(START_METADATA + '<strong>Search Results</strong><br/>' + json.dumps(results, indent=4) + END_METADATA)
 
     return results
 
