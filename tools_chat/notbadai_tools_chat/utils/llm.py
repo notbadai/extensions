@@ -52,13 +52,6 @@ TOOLS = [
     },
 ]
 
-# MESSAGES = [
-#     {
-#         "role": "user",
-#         "content": "What's the temperature in San Francisco now? How about tomorrow? Current Date: 2024-09-30.",
-#     },
-# ]
-
 tools = TOOLS
 
 
@@ -123,6 +116,7 @@ def call_llm(model_id: str,
     usage = None
     content = ''
     response = []
+    accumulated_tool_calls = {}  # Track tool calls by index
 
     for chunk in stream:
         delta = chunk.choices[0].delta
@@ -142,35 +136,60 @@ def call_llm(model_id: str,
             content += delta.content
 
         if delta.tool_calls:
-            api.log(chunk.choices[0].delta.json())
-            if content.strip():
-                response.append({
-                    "role": "assistant",
-                    "content": content,
-                })
-            content = ''
-            tool_calls = [json.loads(t.json()) for t in delta.tool_calls]
+            # accumulate tool calls across stream chunks
+            for tool_call_delta in delta.tool_calls:
+                index = tool_call_delta.index
 
-            for t in tool_calls:
-                args = json.loads(t['function']['arguments'])
-                args = ', '.join(f'{k}={repr(v)}' for k, v in args.items())
-                api.chat(START_METADATA + '<strong>' + t['function']['name'] + '</strong>(' +
-                         args + ')' + END_METADATA)
+                if index not in accumulated_tool_calls:
+                    accumulated_tool_calls[index] = {
+                        'id': tool_call_delta.id or '',
+                        'type': 'function',
+                        'function': {
+                            'name': tool_call_delta.function.name or '',
+                            'arguments': ''
+                        }
+                    }
 
-            response.append({
-                'role': 'assistant',
-                'tool_calls': tool_calls,
-            })
+                # accumulate the function arguments
+                if tool_call_delta.function.arguments:
+                    accumulated_tool_calls[index]['function']['arguments'] += tool_call_delta.function.arguments
+
+                # update other fields if present
+                if tool_call_delta.id:
+                    accumulated_tool_calls[index]['id'] = tool_call_delta.id
+                if tool_call_delta.function.name:
+                    accumulated_tool_calls[index]['function']['name'] = tool_call_delta.function.name
 
         if chunk.usage is not None:
             assert usage is None
             usage = chunk.usage
 
+    # after streaming is complete, process accumulated tool calls
+    if accumulated_tool_calls:
+        if content.strip():
+            response.append({
+                "role": "assistant",
+                "content": content,
+            })
+        content = ''
+
+        # convert accumulated_tool_calls dict to list and display
+        tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls.keys())]
+
+        for t in tool_calls:
+            args = json.loads(t['function']['arguments'])
+            args = ', '.join(f'{k}={repr(v)}' for k, v in args.items())
+            api.chat(START_METADATA + '<strong>' + t['function']['name'] + '</strong>(' +
+                     args + ')' + END_METADATA)
+
+        response.append({
+            'role': 'assistant',
+            'tool_calls': tool_calls,
+        })
+
     elapsed = time.time() - start_time
     meta_data = f'Time: {elapsed:.2f}s'
     if usage is not None:
-        api.log(str(usage))
-
         meta_data += f' Prompt tokens: {usage.prompt_tokens :,} Completion tokens {usage.completion_tokens :,}, Model: {model_name} @ {provider["name"]}'
 
     if push_to_chat:
