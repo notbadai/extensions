@@ -3,7 +3,7 @@ from string import Template
 from pathlib import Path
 from typing import List, Dict
 
-from notbadai_ide import api
+from notbadai_ide import api, START_METADATA, END_METADATA
 
 module_dir = Path(__file__).parent.parent
 
@@ -49,8 +49,7 @@ def search_repo_files(query: str, file_extensions: List[str] = None) -> List[Dic
             # Skip files that can't be read
             continue
 
-    api.push_meta('<strong>Search Results</strong><br/>' +
-                  json.dumps(results, indent=4))
+    api.push(START_METADATA + '<strong>Search Results</strong><br/>' + json.dumps(results, indent=4) + END_METADATA)
 
     return results
 
