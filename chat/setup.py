@@ -4,8 +4,8 @@ with open("readme.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="tools_chat",
-    version="0.1.6",
+    name="notbadai_chat",
+    version="0.1.7",
     author="NotBadAI Team",
     author_email="contact@notbad.ai",
     description="An intelligent programming assistant powered by AI",
@@ -29,5 +29,5 @@ setup(
         "openai",
     ],
     include_package_data=True,
-    package_data={"tools_chat": ["*.md", "**/*.md"]},
+    package_data={"notbadai_chat": ["*.md", "**/*.md"]},
 )
