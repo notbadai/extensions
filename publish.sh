@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/bin/zsh
+setopt null_glob
 set -e
+
+[[ -f ~/.zshrc ]] && source ~/.zshrc
 
 if [ -z "$1" ]; then
     echo "Usage: ./publish.sh <package_name>"
@@ -19,7 +22,7 @@ echo ""
 
 cd "$PACKAGE_DIR"
 
-# Check if common is a symlink and handle it
+# check if common is a symlink and handle it
 COMMON_DIR="notbadai_${PACKAGE_DIR}/common"
 SYMLINK_TARGET=""
 
