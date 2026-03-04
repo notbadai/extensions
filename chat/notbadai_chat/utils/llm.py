@@ -119,6 +119,9 @@ def call_llm(model_id: str,
     accumulated_tool_calls = {}  # Track tool calls by index
 
     for chunk in stream:
+        if not getattr(chunk, "choices", None):
+            continue
+
         delta = chunk.choices[0].delta
         if push_to_chat:
             if getattr(delta, 'reasoning', None):

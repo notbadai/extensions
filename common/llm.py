@@ -69,6 +69,9 @@ def call_llm(model_id: str,
     content = ''
 
     for chunk in stream:
+        if not getattr(chunk, "choices", None):
+            continue
+
         delta = chunk.choices[0].delta
         if push_to_chat:
             if getattr(delta, 'reasoning', None):
